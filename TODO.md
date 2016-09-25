@@ -1,5 +1,8 @@
 # TODO
 
++ Improve code
+  + Code to tag replacements in body
+  + BR tag scanner for location field text
 + Add comments
 + Update README
 
