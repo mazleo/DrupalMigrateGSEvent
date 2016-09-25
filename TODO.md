@@ -5,6 +5,7 @@
 + Improve code
   + Code to tag replacements in body
   + BR tag scanner for location field text
++ Test on multiple Browsers
 + Add comments
 + Update README
 
