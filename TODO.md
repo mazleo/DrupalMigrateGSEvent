@@ -1,5 +1,7 @@
 # TODO
 
++ Get browser titles and track in file
+  + Take user input
 + Improve code
   + Code to tag replacements in body
   + BR tag scanner for location field text
