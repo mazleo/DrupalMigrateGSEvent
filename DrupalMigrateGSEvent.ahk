@@ -49,11 +49,15 @@
     while login.busy
       sleep 100
 
+    ; Retrieves password information
+    FileReadLine, netid, data/login.txt, 1
+    FileReadLine, password, data/login.txt, 2
+
     currentURL := login.LocationURL
     if (currentURL == CasURL) {
       ; Inputs NetID and password information
-      login.document.getElementById("username").value := "jnl64"
-      login.document.getElementById("password").value := "Jomarneon427"
+      login.document.getElementById("username").value := netid
+      login.document.getElementById("password").value := password
       login.document.getElementsByClassName("btn-submit")[0].click()
       while login.busy
         sleep 100
@@ -83,55 +87,12 @@
   while node.busy
     Sleep 100
 
-  source := node.document.documentElement.outerHTML
-
-  titlePos := InStr(source, "edit-title")
-  StringTrimLeft, title, source, %titlePos%
-  titlePos := InStr(title, "value=")
-  StringTrimLeft, title, title, titlePos + 6
-  titlePos := InStr(title, ">")
-  titleLength := StrLen(title)
-  StringTrimRight, title, title, titleLength - titlePos + 2
-
-  categoryPos := InStr(source, "edit-field-event-category-0-value")
-  StringTrimLeft category, source, %categoryPos%
-  categoryPos := InStr(category, "value=")
-  StringTrimLeft category, category, categoryPos + 6
-  categoryPos := InStr(category, ">")
-  categoryLength := StrLen(category)
-  StringTrimRight, category, category, categoryLength - categoryPos + 2
-
-  organizationPos := InStr(source, "edit-field-event-org-id-0-value")
-  StringTrimLeft organization, source, %organizationPos%
-  organizationPos := InStr(organization, "value=")
-  StringTrimLeft organization, organization, organizationPos + 6
-  organizationPos := InStr(organization, ">")
-  organizationLength := StrLen(organization)
-  StringTrimRight, organization, organization, organizationLength - organizationPos + 2
-
-  eventPos := InStr(source, "edit-field-event-id-0-value")
-  StringTrimLeft event, source, %eventPos%
-  eventPos := InStr(event, "value=")
-  StringTrimLeft event, event, eventPos + 6
-  eventPos := InStr(event, ">")
-  eventLength := StrLen(event)
-  StringTrimRight, event, event, eventLength - eventPos + 2
-
-  linkPos := InStr(source, "edit-field-feature-link-0-url")
-  StringTrimLeft link, source, %linkPos%
-  linkPos := InStr(link, "value=")
-  StringTrimLeft link, link, linkPos + 6
-  linkPos := InStr(link, ">")
-  linkLength := StrLen(link)
-  StringTrimRight, link, link, linkLength - linkPos + 2
-
-  bodyPos := InStr(source, "form-textarea resizable ckeditor-mod  textarea-processed ckeditor-processed")
-  StringTrimLeft body, source, %bodyPos%
-  bodyPos := InStr(body, ">")
-  StringTrimLeft body, body, bodyPos
-  bodyPos := InStr(body, "</textarea>")
-  bodyLength := StrLen(body)
-  StringTrimRight, body, body, bodyLength - bodyPos + 1
+  title := node.document.getElementById("edit-title").value
+  category := node.document.getElementById("edit-field-event-category-0-value").value
+  organization := node.document.getElementById("edit-field-event-org-id-0-value").value
+  event := node.document.getElementById("edit-field-event-id-0-value").value
+  link := node.document.getElementById("edit-field-feature-link-0-url").value
+  body := node.document.getElementsByTagName("textarea")[1].innerHTML
 
   startTagPos := InStr(body, "&lt;")
   while (startTagPos > 0) {
@@ -191,25 +152,79 @@
 
   ;---------------------------------------------------------------------------
 
-  node.visible := True
-
   NodeURL := node.document.getElementsByClassName("tabs")[0].getElementsByTagName("li")[0].getElementsByTagName("a")[0].href
-
-  node.navigate[NodeURL]
-  while node.busy
-    sleep 100
-
-  field := node.document.getElementsByClassName("date-display-start")[0].innerHTML
-  source := node.document.documentElement.outerHTML
   node.quit
 
-  if (test != null) {
-    MsgBox % field
-  } else {
-    MsgBox no
+  node := ComObjCreate("InternetExplorer.Application")
+  node.navigate[NodeURL]
+  while node.busy
+    sleep 1000
+  node.visible := True
+
+  source := node.document.documentElement.outerHTML
+
+  singleDate := ""
+  startDate := ""
+  endDate := ""
+  fromDate := ""
+  toDate := ""
+  fromTime := ""
+  toTime := ""
+  isSeparator := ""
+
+  singleDatePos := InStr(source, "date-display-single")
+  startDatePos := InStr(source, "date-display-start")
+  endDatePos := InStr(source, "date-display-end")
+
+  if (singleDatePos > 0) {
+    singleDate := node.document.getElementsByClassName("date-display-single")[0].innerHTML
+    isSeparator := InStr(singleDate, "|")
+    IfInString, singleDate, ", "
+    {
+      StringReplace, singleDate, singleDate, ", "
+      StringReplace, singleDate, singleDate, " "
+    }
+  }
+  if (startDatePos > 0) {
+    startDate := node.document.getElementsByClassName("date-display-start")[0].innerHTML
+    IfInString, startDate, ", "
+    {
+      StringReplace, startDate, startDate, ", "
+      StringReplace, startDate, startDate, " "
+    }
+  }
+  if (endDatePos > 0) {
+    endDate := node.document.getElementsByClassName("date-display-end")[0].innerHTML
+    IfInString, endDate, ", "
+    {
+      StringReplace, endDate, endDate, ", "
+      StringReplace, endDate, endDate, " "
+    }
   }
 
 
+
+  ; Both start and end dates
+  if (singleDatePos == 0 && startDatePos > 0 && endDatePos > 0) {
+    MsgBox % startDate
+    MsgBox % endDate
+  }
+  ; One date and one start time
+  else if (singleDatePos > 0 && isSeparator > 0 && endDatePos == 0) {
+    MsgBox % singleDate
+  }
+  ; One date and both start and end times
+  else if (singleDatePos > 0 && startDatePos > 0 && endDatePos > 0) {
+    MsgBox % singleDate
+    MsgBox % startDate
+    MsgBox % endDate
+  }
+  ; One date only
+  else if (singleDatePos > 0 && isSeparator == 0 && startDatePos == 0 && endDatePos == 0) {
+    MsgBox % singleDate
+  }
+
+  node.quit
 
 ^!F10::
   ExitApp
