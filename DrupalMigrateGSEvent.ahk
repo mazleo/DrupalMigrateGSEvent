@@ -16,7 +16,7 @@
 ^!c::
   ; Initialize GUI Progress bar
   Gui, Add, Progress, w400 h20 -Smooth vProgressBar, 0
-  Gui, Add, Text, vStatus, Copying data
+  Gui, Add, Text, vStatus, Migrating data
   Gui, Show, w420 h50
   GoSub, progBar
   Return
@@ -84,7 +84,6 @@
     Sleep 100
 
   source := node.document.documentElement.outerHTML
-  node.quit
 
   titlePos := InStr(source, "edit-title")
   StringTrimLeft, title, source, %titlePos%
@@ -150,21 +149,34 @@
   if (locationPos > 0) {
     StringTrimLeft location, body, locationPos + 9
     locationPos := InStr(location, "<br />")
-    locationLen := StrLen(location)
-    StringTrimRight, location, location, locationLen - locationPos - 5
-
-    StringReplace, body, body, Location: %location%
-    StringReplace, location, location, <br />
+    if (locationPos > 0) {
+      locationLen := StrLen(location)
+      StringTrimRight, location, location, locationLen - locationPos - 5
+      StringReplace, body, body, Location: %location%
+      StringReplace, location, location, <br />
+    } else {
+      locationPos := InStr(location, "</p>")
+      locationLen := StrLen(location)
+      StringTrimRight, location, location, locationLen - locationPos + 1
+      StringReplace, body, body, Location: %location%
+    }
   }
 
   directionPos := InStr(body, "Directions:")
   if (directionPos > 0) {
     StringTrimLeft direction, body, directionPos + 11
     directionPos := InStr(direction, "<br />")
-    directionLen := StrLen(direction)
-    StringTrimRight, direction, direction, directionLen - directionPos - 5
-    StringReplace, body, body, Directions: %direction%
-    StringReplace, direction, direction, <br />
+    if (directionPos > 0) {
+      directionLen := StrLen(direction)
+      StringTrimRight, direction, direction, directionLen - directionPos - 5
+      StringReplace, body, body, Directions: %direction%
+      StringReplace, direction, direction, <br />
+    } else {
+      directionPos := InStr(direction, "</p>")
+      directionLen := StrLen(direction)
+      StringTrimRight, direction, direction, directionLen - directionPos + 1
+      StringReplace, body, body, Directions: %direction%
+    }
   }
 
   ;Clipboard := body
@@ -179,62 +191,7 @@
 
   ;---------------------------------------------------------------------------
 
-  ; COM Objects to extract HTML Source code from Drupal 6 view page
-  node := ComObjCreate("InternetExplorer.Application")
-  node.navigate[NodeURL]
   node.visible := True
-
-  while node.busy
-    Sleep 100
-
-  ; COM Object to login to server if not logged in
-  login := ComObjCreate("InternetExplorer.Application")
-
-  source := node.document.documentElement.outerHTML
-
-  ; Checks if the correct NetID and Password are provided
-  isDeniedPos := InStr(source, "Access Denied")
-  nTimesDenied := 0
-  while (isDeniedPos > 0 && nTimesDenied < 3) {
-    login.navigate("http://gradstudy.rutgers.edu/login")
-    login.visible := False
-
-    while login.busy
-      sleep 100
-
-    currentURL := login.LocationURL
-    if (currentURL == CasURL) {
-      ; Inputs NetID and password information
-      login.document.getElementById("username").value := "jnl64"
-      login.document.getElementById("password").value := "Jomarneon427"
-      login.document.getElementsByClassName("btn-submit")[0].click()
-      while login.busy
-        sleep 100
-    }
-
-    node.navigate[NodeURL]
-    while node.busy
-      Sleep 100
-
-    source := node.document.documentElement.outerHTML
-
-    isDeniedPos := InStr(source, "Access Denied")
-    if (isDeniedPos > 0) {
-      nTimesDenied += 1
-    }
-    if (nTimesDenied == 3) {
-      MsgBox Unable to login to server. Please provide correct NetID and password
-      login.quit
-      node.quit
-      ExitApp
-    }
-  }
-
-  login.quit
-
-  node.navigate[NodeURL]
-  while node.busy
-    Sleep 100
 
   NodeURL := node.document.getElementsByClassName("tabs")[0].getElementsByTagName("li")[0].getElementsByTagName("a")[0].href
 
@@ -242,7 +199,17 @@
   while node.busy
     sleep 100
 
+  field := node.document.getElementsByClassName("date-display-start")[0].innerHTML
   source := node.document.documentElement.outerHTML
+  node.quit
+
+  if (test != null) {
+    MsgBox % field
+  } else {
+    MsgBox no
+  }
+
+
 
 ^!F10::
   ExitApp
