@@ -12,7 +12,7 @@
 # UPDATED
 
 **9.24.2016**
-+ Server login functionality
++ CAS login functionality
   + Check for login status and information
 + Node edit page data extraction
   + IE COM implementation
