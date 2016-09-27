@@ -1,7 +1,24 @@
 ^!d::
   ; Gets URL and Window data
   ; Separated so that GUI Progress bar does not activate before copying these, where these windows need to be active
-  D7CreateEvent = Create Event | Graduate and Professional Admissions - Google Chrome
+  FileReadLine, D7CreateEvent, d7browser.txt, 1
+  if (D7CreateEvent == "Drupal7") {
+    MsgBox,, Initial Setup, Initial setup required. This setup must be done once on different browsers to allow the program to work on the correct windows. If a different browser is going to be used when this setup has already been done, simply copy and replace "d7browser.txt" on the root folder with the default text file in the "defaults" folder. To start, have the Drupal 7 window active on the "Create Event" page and press enter.
+    Sleep 500
+    KeyWait, Enter, D
+    WinGetActiveTitle, D7CreateEvent
+
+    FileDelete, d7browser.txt
+    FileAppend, %D7CreateEvent%, d7browser.txt
+  }
+
+  FileReadLine, preference, preference.txt, 1
+
+  if (preference == "1") {
+    MsgBox, To start migration of data, activate the Drupal 6 page with the event edit page open and press Enter. Press Ctrl + Alt + Z to turn this message box on or off.
+    Sleep 500
+  }
+  KeyWait, Enter, D
   CasURL := "https://cas.rutgers.edu/login?service=http%3A%2F%2Fgradstudy.rutgers.edu%2Flogin"
   WinGetActiveTitle D6Node
   Send ^l
@@ -22,7 +39,7 @@
   Return
 
   progBar:
-      GuiControl,, ProgressBar, 0
+    GuiControl,, ProgressBar, 0
 
   ; COM Objects to extract HTML Source code from Drupal 6 edit site
   node := ComObjCreate("InternetExplorer.Application")
@@ -69,6 +86,7 @@
 
     source := node.document.documentElement.outerHTML
 
+    ; Prompts user for login information twice if login information does not work
     if (nTimesDenied == 3 || nTimesDenied == 6) {
       MsgBox Unable to login to server. Please provide correct NetID and password
 
@@ -91,6 +109,7 @@
 
   login.quit
 
+  ; Extracts information from edit page
   node.navigate[NodeURL]
   while node.busy
     Sleep 100
@@ -113,23 +132,9 @@
 
   GuiControl,, ProgressBar, +20
 
-  startTagPos := InStr(body, "&lt;")
-  while (startTagPos > 0) {
-    StringReplace, body, body, &lt;, <
-    startTagPos := InStr(body, "&lt;")
-  }
-
-  endTagPos := InStr(body, "&gt;")
-  while (endTagPos > 0) {
-    StringReplace, body, body, &gt;, >
-    endTagPos := InStr(body, "&gt;")
-  }
-
-  ampTagPos := InStr(body, "&amp;")
-  while (ampTagPos > 0) {
-    StringReplace, body, body, &amp;, &
-    ampTagPos := InStr(body, "&amp;")
-  }
+  body := RegExReplace(body, "&lt;", "<")
+  body := RegExReplace(body, "&gt;", ">")
+  body := RegExReplace(body, "&amp;", "&")
 
   GuiControl,, ProgressBar, +10
 
@@ -274,14 +279,14 @@
 
   GuiControl,, ProgressBar, +10
 
-  ; Copy data to Drupal 7 fields
+  ; Copies data to Drupal 7 fields
   WinActivate %D7CreateEvent%
   WinWaitActive %D7CreateEvent%
 
   Send ^l
   Sleep 100
   Send javascript:
-  Clipboard := "javascript: document.getElementById('switch_edit-body-und-0-value').click();"
+  Clipboard := "document.getElementById('switch_edit-body-und-0-value').click();"
   Send ^v
   Sleep 100
   Send {Enter}
@@ -299,7 +304,7 @@
   Send ^l
   Sleep 100
   Send javascript:
-  Clipboard := "javascript: document.getElementById('switch_edit-body-und-0-value').click();"
+  Clipboard := "document.getElementById('switch_edit-body-und-0-value').click();"
   Send ^v
   Sleep 100
   Send {Enter}
@@ -307,6 +312,7 @@
 
   GuiControl,, ProgressBar, +10
 
+  ; Functions to convert and correct date from Month Date, Year to MM/DD/YYYY
   ConvertDate(date)
   {
     IfInString, date, january
@@ -387,6 +393,17 @@
   Gui, Destroy
   node.quit
   Exit
+
+; Changes text in preference text file
+^!z::
+  FileReadLine, temp, preference.txt, 1
+  FileDelete, preference.txt
+  if (temp == "1") {
+    FileAppend, 0, preference.txt
+  } else {
+    FileAppend, 1, preference.txt
+  }
+  Return
 
 ^!F10::
   ExitApp
