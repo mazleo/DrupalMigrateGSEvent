@@ -1,6 +1,7 @@
 # TODO
 
 + Fix automated blocking issue
++ Remove unnecessary keys required for use
 
 # COMPLETED
 
