@@ -1,5 +1,7 @@
 # TODO
 
++ Initialize GUI without separate hotkeys
+  + Sustain focus on D6 window during GUI init(?)
 + Fix automated blocking issue
 + Remove unnecessary keys required for use
 
