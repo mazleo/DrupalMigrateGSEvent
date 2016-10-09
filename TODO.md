@@ -1,4 +1,8 @@
-# COMPLETE
+# TODO
+
++ Fix automated blocking issue
+
+# COMPLETED
 
 **9.26.2016**
 + Improve code
